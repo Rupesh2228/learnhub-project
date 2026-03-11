@@ -1,0 +1,118 @@
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      /* Modern Gradient Background */
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .form-box {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      position: relative;
+      animation: fadeIn 0.8s ease;
+    }
+
+    /* Back Button Styling */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      color: #555;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+    }
+
+    .back-link:hover {
+      color: #764ba2;
+    }
+
+    .back-link span {
+      margin-right: 5px;
+      font-size: 18px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+      display: block;
+      font-weight: 500;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      font-family: inherit;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      outline: none;
+      background-color: #f9f9f9;
+    }
+
+    input:focus, select:focus {
+      border-color: #764ba2;
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+    }
+
+    /* Readonly price field styling */
+    input[readonly] {
+      background-color: #eef2f7;
+      color: #555;
+      font-weight: 600;
+      cursor: not-allowed;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      /* Gradient Button */
+      background: linear-gradient(to right, #667eea, #764ba2);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(118, 75, 162, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
