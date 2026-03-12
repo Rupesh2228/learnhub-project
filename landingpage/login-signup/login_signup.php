@@ -1,5 +1,8 @@
 <?php
 require_once('../include.php');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Generate CSRF token for the form
 $csrf_token = Security::generateCSRFToken();
@@ -26,6 +29,22 @@ $csrf_token = Security::generateCSRFToken();
 <a href="../landingpages.html" class="back-btn" title="Back to Home">
 <i class="fas fa-arrow-left"></i>
 </a>
+
+<!-- Error Message Display -->
+<?php if (isset($_SESSION['error_message'])): ?>
+<div class="error-message">
+    <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($_SESSION['error_message']); ?>
+    <?php unset($_SESSION['error_message']); ?>
+</div>
+<?php endif; ?>
+
+<!-- Success Message Display -->
+<?php if (isset($_SESSION['success_message'])): ?>
+<div class="success-message">
+    <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($_SESSION['success_message']); ?>
+    <?php unset($_SESSION['success_message']); ?>
+</div>
+<?php endif; ?>
 
 <!-- LOGIN FORM -->
 <div id="login-form">

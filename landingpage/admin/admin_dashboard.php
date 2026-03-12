@@ -450,99 +450,17 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
             border: 1px solid #f5c6cb;
         }
 
-        @media (max-width: 768px) {
-            .assignment-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
-
-            .navbar {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            table {
-                font-size: 0.9rem;
-            }
-
-            table th, table td {
-                padding: 10px;
-            }
-        }
-
-        /* Image Modal */
-        .image-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            animation: fadeIn 0.3s;
-        }
-
-        .image-modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            position: relative;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 90%;
-            max-height: 90%;
-            overflow: auto;
-        }
-
-        .modal-content img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        .close-modal {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            background: var(--error);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            border: none;
-        }
-
-        .close-modal:hover {
-            background: #c82333;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+    
     </style>
 </head>
 <body>
 
     <div class="navbar">
           <nav class="nav-links">
-                <a href="landingpages.html" style="color: blue;">Home</a>
-                <a href="Course/course.html">Courses</a>
-                <a href="About/about.html">About</a>
-                <a href="Userdashboard/dashboard.php">Profile</a>
-                <a href="chart/chart.php">Messages</a>
+                <a href="../landingpages.html">Home</a>
+                <a href="../Course/course.html">Courses</a>
+                <a href="../About/about.html">About</a>
+                <a href="../Userdashboard/dashboard.php">Profile</a>
             </nav>
         <h1><i class="fas fa-user-shield"></i> Admin Panel</h1>
         <div class="user-info">

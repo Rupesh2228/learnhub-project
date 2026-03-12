@@ -148,12 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" name="email" placeholder="Enter user email" required>
+                    <input type="text" name="email" placeholder="Enter user email" pattern="[0-9]+" required>
                 </div>
 
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" name="password" placeholder="Enter user password" required>
+                    <input type="text" name="password" placeholder="Enter user password" pattern="[0-9]+" required>
                 </div>
 
                 <div class="action-buttons">

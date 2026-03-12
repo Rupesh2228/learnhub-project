@@ -1,5 +1,5 @@
 <?php
-require_once('form_include.php');
+// Removed form_include.php - using mysqli from include.php
 require_once('../include.php');
 
 // --- Check if user is logged in ---
@@ -16,8 +16,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Sanitize POST data properly (no htmlspecialchars on input)
-    $name = Security::sanitizeInput($_POST['full_name'] ?? '');
-    $email = Security::sanitizeInput($_POST['email'] ?? '');
     $phone = Security::sanitizeInput($_POST['phone'] ?? '');
     $course = Security::sanitizeInput($_POST['course_name'] ?? '');
     $price = Security::sanitizeInput($_POST['price'] ?? '');
@@ -27,13 +25,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if(!empty($name) && !empty($email) && !empty($course) && !empty($price)) {
 
         // Prepare SQL with user_id
-        $sql = "INSERT INTO orders (user_id, full_name, email, phone, course_name, price, purchase_date)
-                VALUES (:user_id, :name, :email, :phone, :course, :price, NOW())";
+        $sql = "INSERT INTO orders (user_id,  phone, course_name, price, purchase_date)
+                VALUES (:user_id, :phone, :course, :price, NOW())";
         try {
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':user_id', $user_id);
-            $stmt->bindParam(':name', $name);
-            $stmt->bindParam(':email', $email);
             $stmt->bindParam(':phone', $phone);
             $stmt->bindParam(':course', $course);
             $stmt->bindParam(':price', $price);

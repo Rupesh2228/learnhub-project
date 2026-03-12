@@ -89,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <div class="form-group">
                     <label>Email</label>
-                    <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
+                    <input type="text" name="email" placeholder="Enter user email" pattern="[0-9]+" value="<?php echo htmlspecialchars($user['email']); ?>" required>
                 </div>
 
                 <div class="action-buttons">

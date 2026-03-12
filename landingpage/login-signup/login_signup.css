@@ -22,7 +22,7 @@
         border-radius: 20px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         position: relative;
-        overflow: hidden;
+        overflow: visible;
     }
 
     /* --- BACK ARROW BUTTON --- */
@@ -144,4 +144,40 @@
     /* --- 8. UTILITY CLASSES --- */
     .hidden {
         display: none;
+    }
+
+    /* --- 9. ERROR MESSAGE --- */
+    .error-message {
+        background-color: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fca5a5;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+
+    .error-message i {
+        font-size: 1.2rem;
+    }
+
+    /* --- 10. SUCCESS MESSAGE --- */
+    .success-message {
+        background-color: #dcfce7;
+        color: #15803d;
+        border: 1px solid #86efac;
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+    }
+
+    .success-message i {
+        font-size: 1.2rem;
     }

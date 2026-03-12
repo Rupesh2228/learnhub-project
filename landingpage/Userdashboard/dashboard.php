@@ -206,15 +206,7 @@ $orders = $orders_stmt->get_result();
             border: 1px solid #f5c6cb;
         }
 
-        @media (max-width: 600px) {
-            .container { margin: 10px auto; }
-            .navbar { padding: 15px; }
-            .action-buttons { flex-direction: column; }
-            .btn { width: 100%; margin-right: 0; margin-bottom: 10px; }
-            .profile-details { flex-direction: column; text-align: center; }
-            .course-header { flex-direction: column; }
-            .course-meta { flex-direction: column; gap: 10px; }
-        }
+
     </style>
 </head>
 <body>
