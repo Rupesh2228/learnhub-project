@@ -1,20 +1,20 @@
 <?php
 session_start();
 
-// Determine profile link based on login type
+// Determine profile link based on session role
 $profile_link = "../login-signup/login_signup.html"; // Default: not logged in
 $profile_text = "Login / Sign Up";
 $show_profile_link = true;
 
 // Check if admin is logged in
-if (isset($_SESSION['admin_id'])) {
+if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
     $profile_link = "../admin/admin_dashboard.php";
     $profile_text = "Admin Profile";
     $show_profile_link = false; // Hide login button for admins
 }
 // Check if regular user is logged in
-elseif (isset($_SESSION['user_id'])) {
-    $profile_link = "../Userdashboard/change_profile.php";
+elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+    $profile_link = "../Userdashboard/dashboard.php";
     $profile_text = "My Profile";
     $show_profile_link = false; // Hide login button for users
 }
@@ -38,12 +38,12 @@ elseif (isset($_SESSION['user_id'])) {
     <!-- Navigation -->
     <div class="nav-container">
         <div class="logo">
-            <a href="../landingpages.html"><h1>LearnHub</h1></a>
+            <a href="../landingpages.php"><h1>LearnHub</h1></a>
         </div>
         <nav class="nav-links">
-            <a href="../landingpages.html">Home</a>
+            <a href="../landingpages.php">Home</a>
             <a href="course.php" class="active">Courses</a>
-            <a href="../About/about.html">About</a>
+            <a href="../About/about.php">About</a>
             <a href="<?php echo $profile_link; ?>"><?php echo $profile_text; ?></a>
         </nav>
         <div class="nav-actions">
@@ -133,9 +133,9 @@ elseif (isset($_SESSION['user_id'])) {
             <div class="footer-col">
                 <h3>Quick Links</h3>
                 <ul class="footer-links">
-                    <li><a href="../landingpages.html">Home</a></li>
+                    <li><a href="../landingpages.php">Home</a></li>
                     <li><a href="course.php">Courses</a></li>
-                    <li><a href="../About/about.html">About Us</a></li>
+                    <li><a href="../About/about.php">About Us</a></li>
                 </ul>
             </div>
 

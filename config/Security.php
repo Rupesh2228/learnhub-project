@@ -5,6 +5,11 @@
 
 class Security {
     public static function initializeSession() {
+        // Check if session is already active
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            return;
+        }
+
         $options = [
             'cookie_httponly' => true,
             'cookie_samesite' => getenv('SESSION_SAMESITE') ?: 'Strict',

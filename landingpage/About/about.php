@@ -1,3 +1,16 @@
+<?php
+session_start();
+
+// Determine profile link based on session role
+$profile_link = "../login-signup/login_signup.html";
+if (isset($_SESSION['role'])) {
+    if ($_SESSION['role'] === 'admin') {
+        $profile_link = "../admin/admin_dashboard.php";
+    } elseif ($_SESSION['role'] === 'user') {
+        $profile_link = "../Userdashboard/dashboard.php";
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,14 +25,14 @@
 <body>
   <nav class="navbar">
     <div class="nav-container">
-      <a href="../landingpages.html">
+      <a href="../landingpages.php">
         <div class="logo">LearnHub</div>
       </a>
       <div class="nav-links">
-        <a href="../landingpages.html">Home</a>
-        <a href="../Course/course.html">Courses</a>
-        <a href="../About/about.html" style="color: #4f46e5;">About</a>
-        <a href="../Userdashboard/dashboard.php">Profile</a>
+        <a href="../landingpages.php">Home</a>
+        <a href="../Course/course.php">Courses</a>
+        <a href="../About/about.php" style="color: #4f46e5;">About</a>
+        <a href="<?php echo $profile_link; ?>">Profile</a>
       </div>
       <div class="nav-actions">
         <a href="../login-signup/login_signup.html" class="btn-signup">Sign Up / Login</a>
