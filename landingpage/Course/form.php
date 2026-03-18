@@ -1,14 +1,22 @@
 <?php
 require_once('../include.php');
 
-// Check if user is logged in
+// --- Check if user is logged in ---
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../login-signup/login_signup.php"); 
+    header("Location: ../login-signup/login_signup.php");
     exit();
 }
 
-// Generate CSRF token
-$csrf_token = Security::generateCSRFToken();
+// Ensure price column exists in courses table (legacy DB fix)
+$create_price_column = "ALTER TABLE courses ADD COLUMN IF NOT EXISTS price DECIMAL(10,2) NOT NULL DEFAULT 0";
+$conn->query($create_price_column);
+
+$course_stmt = $conn->prepare("SELECT course_name, price FROM courses ORDER BY course_name");
+$course_stmt->execute();
+$course_result = $course_stmt->get_result();
+$courses = $course_result->fetch_all(MYSQLI_ASSOC);
+$course_stmt->close();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -23,39 +31,25 @@ $csrf_token = Security::generateCSRFToken();
 
 <div class="form-box">
   <!-- Arrow Link to Landing Pages -->
-  <a href="course.html" class="back-link">
+  <a href="course.php" class="back-link">
     <span>&#8592;</span>
   </a>
 
-  <h2>Checkout</h2>
+  <h2>Fill the form</h2>
 
   <form action="order.php" method="POST">
-    <!-- CSRF Token -->
-    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
-
-    <div class="form-group">
-      <label>Full Name</label>
-      <input type="text" name="full_name" placeholder="John Doe" required>
-    </div>
-
-    <div class="form-group">
-      <label>Email Address</label>
-      <input type="email" name="email" placeholder="john@example.com" required>
-    </div>
-
     <div class="form-group">
       <label>Phone Number</label>
-      <input type="tel" name="phone" placeholder="123-456-7890" required>
+      <input type="tel" name="phone" placeholder="123-456-7890" pattern="[0-9\s\-\+\$\$]{10,}" required>
     </div>
 
     <div class="form-group">
       <label>Select Course</label>
       <select id="course" name="course_name" onchange="setPrice()" required>
         <option value="">Choose a course...</option>
-        <option value="Fullstack Development">Fullstack Development</option>
-        <option value="AI/ML">AI / Machine Learning</option>
-        <option value="Cybersecurity">Cybersecurity</option>
-        <option value="UI/UX Design">UI / UX Design</option>
+        <?php foreach ($courses as $course): ?>
+          <option value="<?php echo htmlspecialchars($course['course_name']); ?>" data-price="<?php echo number_format($course['price'] ?? 0, 2, '.', ''); ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
+        <?php endforeach; ?>
       </select>
     </div>
 
@@ -69,32 +63,41 @@ $csrf_token = Security::generateCSRFToken();
 </div>
 
 <script>
+const coursePrices = {
+<?php foreach ($courses as $course): ?>
+  "<?php echo addslashes($course['course_name']); ?>": "<?php echo addslashes($course['price'] ?? '0'); ?>",
+<?php endforeach; ?>
+};
+
 function setPrice(){
-  let course = document.getElementById("course").value;
-  let priceField = document.getElementById("price");
+  const courseSelect = document.getElementById("course");
+  const selectedOption = courseSelect.options[courseSelect.selectedIndex];
+  const priceField = document.getElementById("price");
+  const selectedPrice = selectedOption ? selectedOption.dataset.price : '';
+  priceField.value = selectedPrice !== '' && !isNaN(selectedPrice) ? parseFloat(selectedPrice).toFixed(2) : "";
+}
 
-  if(course === ""){
-    priceField.value = "";
-    return;
-  }
+function getParameterByName(name) {
+  const url = window.location.href;
+  name = name.replace(/[\[\]]/g, "\\$&");
+  const regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)");
+  const results = regex.exec(url);
+  if (!results) return null;
+  if (!results[2]) return '';
+  return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
 
-  switch(course) {
-    case "Fullstack Development":
-      priceField.value = "3000.00";
+const defaultCourse = getParameterByName('course_name');
+if (defaultCourse) {
+  const courseSelect = document.getElementById("course");
+  for (let i = 0; i < courseSelect.options.length; i++) {
+    if (courseSelect.options[i].value === defaultCourse) {
+      courseSelect.selectedIndex = i;
       break;
-    case "AI/ML":
-      priceField.value = "5000.00";
-      break;
-    case "Cybersecurity":
-      priceField.value = "7000.00";
-      break;
-    case "UI/UX Design":
-      priceField.value = "1500.00";
-      break;
-    default:
-      priceField.value = "";
+    }
   }
 }
+setPrice();
 </script>
 
 </body>

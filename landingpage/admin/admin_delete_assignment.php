@@ -7,7 +7,7 @@ $assignment_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($assignment_id > 0) {
     // Get assignment details first
-    $stmt = $conn->prepare("SELECT image FROM assignments WHERE id = ?");
+    $stmt = $conn->prepare("SELECT file_path FROM assignments WHERE id = ?");
     $stmt->bind_param("i", $assignment_id);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -15,10 +15,10 @@ if ($assignment_id > 0) {
     
     if ($assignment) {
         // Delete the image file if it exists
-        if ($assignment['image']) {
-            $image_path = ASSIGNMENTS_DIR . '/' . $assignment['image'];
-            if (file_exists($image_path)) {
-                unlink($image_path);
+        if ($assignment['file_path']) {
+            $file_path = ASSIGNMENTS_DIR . '/' . $assignment['file_path'];
+            if (file_exists($file_path)) {
+                unlink($file_path);
             }
         }
         

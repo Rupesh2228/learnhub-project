@@ -3,125 +3,96 @@ include 'user_check.php';
 include "db.php";
 
 $user_id = $_SESSION['user_id'];
+$title = trim($_POST['title'] ?? '');
+$course_id = intval($_POST['course_id'] ?? 0);
+$course_name = trim($_POST['course_name'] ?? '');
+$assignment_file = '';
 
-// Get form data
-$title = isset($_POST['title']) ? trim($_POST['title']) : '';
-$description = isset($_POST['description']) ? trim($_POST['description']) : '';
-$course_name = isset($_POST['course_name']) ? trim($_POST['course_name']) : '';
-
-// Get course_id from courses table using course_name
-$course_id = null;
-if ($course_name) {
-    $course_stmt = $conn->prepare("SELECT id FROM courses WHERE course_name = ?");
-    $course_stmt->bind_param("s", $course_name);
-    $course_stmt->execute();
-    $course_result = $course_stmt->get_result();
-    
-    // DEBUG: Log what we're searching for and what we find
-    error_log("DEBUG: Looking for course_name: '$course_name'");
-    error_log("DEBUG: Found " . $course_result->num_rows . " rows");
-    
-    if ($course_result->num_rows > 0) {
-        $course_row = $course_result->fetch_assoc();
-        $course_id = $course_row['id'];
-        error_log("DEBUG: Found course_id: $course_id");
-    } else {
-        // Debug: show all available courses
-        $all_courses = $conn->query("SELECT id, course_name FROM courses");
-        error_log("DEBUG: Available courses in database:");
-        while($row = $all_courses->fetch_assoc()) {
-            error_log("  - ID: " . $row['id'] . ", Name: '" . $row['course_name'] . "'");
-        }
-    }
-    $course_stmt->close();
+// Validate input
+if (!$title || !$course_name) {
+    $_SESSION['error_message'] = "Please fill all required fields!";
+    header("Location: dashboard.php");
+    exit();
 }
 
-// Handle File Upload
-$assignment_file = $_FILES['assignment_img']['name'] ?? '';
-$tmp = $_FILES['assignment_img']['tmp_name'] ?? '';
-$upload_dir = ASSIGNMENTS_DIR . '/';
-
-// Ensure directory exists with secure permissions
-if (!file_exists($upload_dir)) {
-    mkdir($upload_dir, 0755, true);
+// Resolve course_id from course name if missing
+if (!$course_id && $course_name) {
+    $course_lookup = $conn->prepare("SELECT id FROM courses WHERE course_name = ? LIMIT 1");
+    $course_lookup->bind_param('s', $course_name);
+    $course_lookup->execute();
+    $course_row = $course_lookup->get_result()->fetch_assoc();
+    $course_lookup->close();
+    $course_id = intval($course_row['id'] ?? 0);
 }
 
-$success_message = "";
-$error_message = "";
-
-// Security: Validate file upload
-if ($assignment_file && $tmp) {
-    // Validate upload
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    $validation = Security::validateFileUpload($_FILES['assignment_img'], null, $allowedTypes);
-    
-    if (isset($validation['error'])) {
-        $error_message = $validation['error'];
-    } else {
-        $allowed_ext = ['jpg', 'jpeg', 'png', 'gif'];
-        $file_ext = strtolower(pathinfo($assignment_file, PATHINFO_EXTENSION));
-
-        if (in_array($file_ext, $allowed_ext)) {
-            // Generate unique filename to prevent overwriting
-            $new_filename = uniqid() . "_" . time() . "." . $file_ext;
-            $upload_path = $upload_dir . $new_filename;
-            
-            if (move_uploaded_file($tmp, $upload_path)) {
-                $assignment_file = $new_filename;
-                // Set secure file permissions
-                chmod($upload_path, 0644);
-            } else {
-                $error_message = "Error uploading file. Please check folder permissions.";
-            }
-        } else {
-            $error_message = "Invalid file type. Only JPG, PNG, GIF allowed.";
-        }
-    }
+if (!$course_id) {
+    $_SESSION['error_message'] = "Unable to resolve course. Please try again.";
+    header("Location: dashboard.php");
+    exit();
 }
 
-// Insert into Assignments Table
-if ($title && $course_id) {
-    // Insert with course_id from courses table
-    $sql = "INSERT INTO assignments (user_id, course_id, title, description, submitted_at) 
-            VALUES (?, ?, ?, ?, NOW())";
-    
-    $stmt = $conn->prepare($sql);
-    
-    if ($stmt) {
-        $stmt->bind_param("iiss", $user_id, $course_id, $title, $description);
-        
-        if ($stmt->execute()) {
-            // Get the last inserted ID
-            $last_id = $conn->insert_id;
-            
-            // Update the image field if file was uploaded
-            if ($assignment_file) {
-                $update_sql = "UPDATE assignments SET image = ? WHERE id = ?";
-                $update_stmt = $conn->prepare($update_sql);
-                $update_stmt->bind_param("si", $assignment_file, $last_id);
-                $update_stmt->execute();
-                $update_stmt->close();
-            }
-            
-            $_SESSION['success_message'] = "Assignment submitted successfully!";
-            header("Location: dashboard.php");
-            exit();
-        } else {
-            $_SESSION['error_message'] = "Error submitting assignment: " . $stmt->error;
-        }
-        $stmt->close();
-    } else {
-        $_SESSION['error_message'] = "Failed to prepare statement: " . $conn->error;
-    }
+// Prevent duplicate submissions for same course
+if ($course_id > 0) {
+    $check_stmt = $conn->prepare("SELECT id FROM assignments WHERE user_id = ? AND course_id = ? LIMIT 1");
+    $check_stmt->bind_param("ii", $user_id, $course_id);
 } else {
-    if (!$title) {
-        $_SESSION['error_message'] = "Assignment title is required!";
-    } elseif (!$course_id) {
-        $_SESSION['error_message'] = "Course not found!";
-    }
+    $check_stmt = $conn->prepare("SELECT id FROM assignments WHERE user_id = ? AND course_name = ? LIMIT 1");
+    $check_stmt->bind_param("is", $user_id, $course_name);
+}
+$check_stmt->execute();
+$check_res = $check_stmt->get_result();
+if ($check_res->num_rows > 0) {
+    $_SESSION['error_message'] = "You have already submitted this assignment.";
+    header("Location: dashboard.php");
+    exit();
+}
+$check_stmt->close();
+
+// Handle file upload
+if (empty($_FILES['assignment_img']['name'])) {
+    $_SESSION['error_message'] = "Please upload your assignment file.";
+    header("Location: dashboard.php");
+    exit();
 }
 
-// Redirect to dashboard
+if (!empty($_FILES['assignment_img']['name'])) {
+    $tmp = $_FILES['assignment_img']['tmp_name'];
+    $file_name = $_FILES['assignment_img']['name'];
+    $ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+    $allowed = ['jpg','jpeg','png','gif','pdf','docx'];
+
+    if (!in_array($ext, $allowed)) {
+        $_SESSION['error_message'] = "Invalid file type!";
+        header("Location: dashboard.php");
+        exit();
+    }
+
+    $assignment_file = uniqid() . "_" . time() . "." . $ext;
+    $upload_dir = ASSIGNMENTS_DIR . '/';
+
+    if (!file_exists($upload_dir)) mkdir($upload_dir, 0755, true);
+
+    if (!move_uploaded_file($tmp, $upload_dir . $assignment_file)) {
+        $_SESSION['error_message'] = "Failed to upload file.";
+        header("Location: dashboard.php");
+        exit();
+    }
+
+    chmod($upload_dir . $assignment_file, 0644);
+}
+
+// Insert assignment
+$sql = "INSERT INTO assignments (user_id, course_id, course_name, file_path, submitted_at) 
+        VALUES (?, ?, ?, ?, NOW())";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("iiss", $user_id, $course_id, $course_name, $assignment_file);
+if ($stmt->execute()) {
+    $_SESSION['success_message'] = "Assignment submitted successfully!";
+} else {
+    $_SESSION['error_message'] = "Database error: " . $stmt->error;
+}
+$stmt->close();
+
 header("Location: dashboard.php");
 exit();
 ?>

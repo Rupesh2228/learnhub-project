@@ -104,6 +104,102 @@ if ($conn->query($sql_assignments) === TRUE) {
     echo "<p style='color: red;'>✗ Error: " . htmlspecialchars($conn->error) . "</p>";
 }
 
+// 6. CREATE ORDERS TABLE
+echo "<h3>Creating Orders Table...</h3>";
+$sql_orders = "CREATE TABLE IF NOT EXISTS orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    course_id INT NOT NULL,
+    course_name VARCHAR(255) NOT NULL,
+    price DECIMAL(10,2) NOT NULL DEFAULT 0,
+    purchase_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+)";
+if ($conn->query($sql_orders) === TRUE) {
+    echo "<p style='color: green;'>✓ Orders table created</p>";
+    $tables_created[] = 'orders';
+} else {
+    echo "<p style='color: red;'>✗ Error: " . htmlspecialchars($conn->error) . "</p>";
+}
+
+// 7. CREATE QUIZZES TABLE
+echo "<h3>Creating Quizzes Table...</h3>";
+$sql_quizzes = "CREATE TABLE IF NOT EXISTS quizzes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_id INT NOT NULL,
+    title VARCHAR(255) DEFAULT 'Course Quiz',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+)";
+if ($conn->query($sql_quizzes) === TRUE) {
+    echo "<p style='color: green;'>✓ Quizzes table created</p>";
+    $tables_created[] = 'quizzes';
+} else {
+    echo "<p style='color: red;'>✗ Error: " . htmlspecialchars($conn->error) . "</p>";
+}
+
+// 8. CREATE QUIZ QUESTIONS TABLE
+echo "<h3>Creating Quiz Questions Table...</h3>";
+$sql_questions = "CREATE TABLE IF NOT EXISTS quiz_questions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT NOT NULL,
+    question TEXT NOT NULL,
+    option_a VARCHAR(255) NOT NULL,
+    option_b VARCHAR(255) NOT NULL,
+    option_c VARCHAR(255) NOT NULL,
+    option_d VARCHAR(255) NOT NULL,
+    correct_answer ENUM('A','B','C','D') NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+)";
+if ($conn->query($sql_questions) === TRUE) {
+    echo "<p style='color: green;'>✓ Quiz questions table created</p>";
+    $tables_created[] = 'quiz_questions';
+} else {
+    echo "<p style='color: red;'>✗ Error: " . htmlspecialchars($conn->error) . "</p>";
+}
+
+// 9. CREATE QUIZ RESULTS TABLE
+echo "<h3>Creating Quiz Results Table...</h3>";
+$sql_results = "CREATE TABLE IF NOT EXISTS quiz_results (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    quiz_id INT NOT NULL,
+    score INT NOT NULL,
+    total_questions INT NOT NULL,
+    percentage DECIMAL(5,2) NOT NULL,
+    taken_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE
+)";
+if ($conn->query($sql_results) === TRUE) {
+    echo "<p style='color: green;'>✓ Quiz results table created</p>";
+    $tables_created[] = 'quiz_results';
+} else {
+    echo "<p style='color: red;'>✗ Error: " . htmlspecialchars($conn->error) . "</p>";
+}
+
+// 10. CREATE QUIZ ANSWERS TABLE
+echo "<h3>Creating Quiz Answers Table...</h3>";
+$sql_answers = "CREATE TABLE IF NOT EXISTS quiz_answers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    result_id INT NOT NULL,
+    question_id INT NOT NULL,
+    user_answer ENUM('A','B','C','D') NOT NULL,
+    correct_answer ENUM('A','B','C','D') NOT NULL,
+    is_correct TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (result_id) REFERENCES quiz_results(id) ON DELETE CASCADE,
+    FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE
+)";
+if ($conn->query($sql_answers) === TRUE) {
+    echo "<p style='color: green;'>✓ Quiz answers table created</p>";
+    $tables_created[] = 'quiz_answers';
+} else {
+    echo "<p style='color: red;'>✗ Error: " . htmlspecialchars($conn->error) . "</p>";
+}
+
 // Summary
 echo "<hr>";
 echo "<h3 style='color: #10b981;'>✓ Setup Complete!</h3>";

@@ -1,8 +1,9 @@
 <?php
 require_once('../include.php');
 
-// Generate CSRF token for the form
-$csrf_token = Security::generateCSRFToken();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -13,7 +14,7 @@ $csrf_token = Security::generateCSRFToken();
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
 <link rel="stylesheet" href="login_signup.css">
 
@@ -36,9 +37,6 @@ $csrf_token = Security::generateCSRFToken();
 </div>
 
 <form action="login.php" method="POST">
-
-<!-- CSRF Token -->
-<input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
 
 <div class="form-group">
 <label>Email Address</label>
@@ -72,9 +70,6 @@ Don't have an account? <a onclick="toggleForm()">Sign Up</a>
 </div>
 
 <form action="signup.php" method="POST">
-
-<!-- CSRF Token -->
-<input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf_token); ?>">
 
 <div class="form-group">
 <label>Full Name</label>
@@ -128,6 +123,27 @@ function togglePassword(fieldId, icon) {
         icon.classList.add('fa-eye');
     }
 }
+
+// Ensure Font Awesome icons are loaded
+window.addEventListener('load', function() {
+    // Check if Font Awesome is loaded
+    const testIcon = document.querySelector('.fas');
+    if (testIcon) {
+        const computedStyle = window.getComputedStyle(testIcon, ':before');
+        const content = computedStyle.getPropertyValue('content');
+        
+        // If Font Awesome didn't load, add fallback
+        if (!content || content === 'none' || content === '') {
+            console.warn('Font Awesome icons may not be loading properly');
+            // Reload Font Awesome from alternative CDN
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = 'https://use.fontawesome.com/releases/v6.4.0/css/all.css';
+            link.crossOrigin = 'anonymous';
+            document.head.appendChild(link);
+        }
+    }
+});
 </script>
 
 </body>

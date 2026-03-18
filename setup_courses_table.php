@@ -5,7 +5,6 @@
 // ============================================
 
 require_once(__DIR__ . '/config/Database.php');
-require_once(__DIR__ . '/config/Security.php');
 
 $conn = getDB();
 
@@ -16,6 +15,8 @@ $sql = "CREATE TABLE IF NOT EXISTS courses (
     id INT AUTO_INCREMENT PRIMARY KEY,
     course_name VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
+    price DECIMAL(10,2) NOT NULL DEFAULT 0,
+    image_path VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 

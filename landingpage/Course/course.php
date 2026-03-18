@@ -1,23 +1,29 @@
 <?php
-session_start();
+require_once('../include.php');
 
-// Determine profile link based on session role
-$profile_link = "../login-signup/login_signup.html"; // Default: not logged in
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+$profile_link = "../login-signup/login_signup.html";
 $profile_text = "Login / Sign Up";
 $show_profile_link = true;
 
-// Check if admin is logged in
 if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
     $profile_link = "../admin/admin_dashboard.php";
     $profile_text = "Admin Profile";
-    $show_profile_link = false; // Hide login button for admins
-}
-// Check if regular user is logged in
-elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
+    $show_profile_link = false;
+} elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
     $profile_link = "../Userdashboard/dashboard.php";
     $profile_text = "My Profile";
-    $show_profile_link = false; // Hide login button for users
+    $show_profile_link = false;
 }
+
+$course_stmt = $conn->prepare("SELECT id, course_name, description, price, image_path FROM courses ORDER BY course_name");
+$course_stmt->execute();
+$courses_result = $course_stmt->get_result();
+$courses = $courses_result->fetch_all(MYSQLI_ASSOC);
+$course_stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -63,55 +69,36 @@ elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'user') {
         </div>
 
         <div class="course-container">
-
-            <!-- Card 1 -->
-            <div class="course-card">
-                <div class="card-image img-stack">
-                    <img src="mern.jpg" alt="Full Stack Development">
+            <?php if (!empty($courses)): ?>
+                <?php foreach ($courses as $course): ?>
+                    <div class="course-card">
+                        <div class="card-image img-stack">
+                            <?php if (!empty($course['image_path'])): ?>
+                                <img src="../uploads/<?php echo htmlspecialchars($course['image_path']); ?>" alt="<?php echo htmlspecialchars($course['course_name']); ?>">
+                            <?php else: ?>
+                                <img src="mern.jpg" alt="<?php echo htmlspecialchars($course['course_name']); ?>">
+                            <?php endif; ?>
+                        </div>
+                        <div class="card-content">
+                            <h2><?php echo htmlspecialchars($course['course_name']); ?></h2>
+                            <p><?php echo htmlspecialchars($course['description'] ?: 'Learn this course with our expert instructors.'); ?></p>
+                            <p style="margin-top: 5px; font-weight: 600; color: #2f1f9f;">Price: Rs <?php echo number_format($course['price'] ?? 0, 2); ?></p>
+                            <?php if (isset($_SESSION['user_id'])): ?>
+                                <a href="form.php?course_name=<?php echo urlencode($course['course_name']); ?>"><button class="btn-course">Purchase Course</button></a>
+                            <?php else: ?>
+                                <a href="../login-signup/login_signup.php"><button class="btn-course">Login to Purchase</button></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="course-card">
+                    <div class="card-content">
+                        <h2>No courses available</h2>
+                        <p>Please check back later or contact admin.</p>
+                    </div>
                 </div>
-                <div class="card-content">
-                    <h2>Full Stack Development</h2>
-                    <p>Learn HTML, CSS, JavaScript, React, Node.js and databases to build complete web applications from scratch.</p>
-                    <a href="form.php"><button class="btn-course">View Course</button></a>
-                </div>
-            </div>
-
-            <!-- Card 2 -->
-            <div class="course-card">
-                <div class="card-image img-ai">
-                    <img src="AI.jpg" alt="AI / Machine Learning">
-                </div>
-                <div class="card-content">
-                    <h2>AI / Machine Learning</h2>
-                    <p>Understand Artificial Intelligence and Machine Learning concepts with practical Python examples.</p>
-                    <a href="form.php"><button class="btn-course">View Course</button></a>
-                </div>
-            </div>
-
-            <!-- Card 3 -->
-            <div class="course-card">
-                <div class="card-image img-sec">
-                    <img src="cyber-security.jpg" alt="cyber-security">
-                </div>
-                <div class="card-content">
-                    <h2>Cybersecurity</h2>
-                    <p>Learn how to protect systems, networks and data from cyber attacks and digital threats.</p>
-                    <a href="form.php"><button class="btn-course">View Course</button></a>
-                </div>
-            </div>
-
-            <!-- Card 4 -->
-            <div class="course-card">
-                <div class="card-image img-design">
-                    <img src="ui.webp" alt="UI / UX Design">
-                </div>
-                <div class="card-content">
-                    <h2>UI / UX Design</h2>
-                    <p>Learn to design modern, user-friendly interfaces and improve user experience using Figma.</p>
-                    <a href="form.php"><button class="btn-course">View Course</button></a>
-                </div>
-            </div>
-
+            <?php endif; ?>
         </div>
     </section>
 

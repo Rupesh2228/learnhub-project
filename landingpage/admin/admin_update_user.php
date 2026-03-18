@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         if ($stmt->execute()) {
             $_SESSION['success_message'] = "User updated successfully!";
-            header("Location: admin_update_user.php?id=" . $user_id);
+            header("Location: admin_dashboard.php");
             exit();
         } else {
             $_SESSION['error_message'] = "Error updating user: " . $stmt->error;

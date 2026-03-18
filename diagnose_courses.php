@@ -1,6 +1,5 @@
 <?php
 require_once(__DIR__ . '/config/Database.php');
-require_once(__DIR__ . '/config/Security.php');
 
 $conn = getDB();
 
@@ -13,7 +12,7 @@ $courses = $conn->query("SELECT id, course_name FROM courses ORDER BY course_nam
 if($courses->num_rows > 0) {
     echo "<ul>";
     while($row = $courses->fetch_assoc()) {
-        echo "<li>ID: " . (int)$row['id'] . " | Name: <strong>'" . Security::escapeOutput($row['course_name']) . "'</strong></li>";
+        echo "<li>ID: " . (int)$row['id'] . " | Name: <strong>'" . htmlspecialchars($row['course_name'], ENT_QUOTES, 'UTF-8') . "'</strong></li>";
     }
     echo "</ul>";
 } else {
@@ -36,9 +35,9 @@ if($orders->num_rows > 0) {
         $check_result = $check->get_result();
         
         if($check_result->num_rows > 0) {
-            echo "<li style='color: green;'>✓ <strong>'" . Security::escapeOutput($course_name) . "'</strong> - EXISTS in courses table</li>";
+            echo "<li style='color: green;'>✓ <strong>'" . htmlspecialchars($course_name, ENT_QUOTES, 'UTF-8') . "'</strong> - EXISTS in courses table</li>";
         } else {
-            echo "<li style='color: red;'>✗ <strong>'" . Security::escapeOutput($course_name) . "'</strong> - MISSING in courses table! (This is the problem)</li>";
+            echo "<li style='color: red;'>✗ <strong>'" . htmlspecialchars($course_name, ENT_QUOTES, 'UTF-8') . "'</strong> - MISSING in courses table! (This is the problem)</li>";
             $missing[] = $course_name;
         }
         $check->close();

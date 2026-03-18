@@ -4,11 +4,13 @@
 // Include this file at the top of every user dashboard page
 // ============================================
 
-session_start();
+// Start session only if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Check if user is logged in and is a regular user (not admin)
 if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
-    // Not a regular user - redirect to login
     echo "<script>
     alert('Access Denied! User login required.');
     window.location.href='../login-signup/login_signup.html';
@@ -18,7 +20,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'user') {
 
 // Check if user_id exists in session
 if (!isset($_SESSION['user_id'])) {
-    // Session tampered with - redirect to login
     echo "<script>
     alert('Session Error! Please login again.');
     window.location.href='../login-signup/login_signup.html';
@@ -26,5 +27,5 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// User is authenticated as regular user
+// User is authenticated
 ?>

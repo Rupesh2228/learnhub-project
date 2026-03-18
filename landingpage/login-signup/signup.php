@@ -2,19 +2,13 @@
 require_once('../include.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate CSRF token
-    if (empty($_POST['csrf_token']) || !Security::validateCSRFToken($_POST['csrf_token'])) {
-        echo "<script>alert('Security validation failed. Please try again.'); window.location.href='login_signup.php';</script>";
-        exit();
-    }
-
     // Get and validate form inputs
-    $name = isset($_POST['fullname']) ? Security::sanitizeInput($_POST['fullname']) : '';
-    $email = isset($_POST['email']) ? Security::sanitizeInput($_POST['email']) : '';
+    $name = isset($_POST['fullname']) ? $_POST['fullname'] : '';
+    $email = isset($_POST['email']) ? $_POST['email'] : '';
     $password = isset($_POST['password']) ? $_POST['password'] : '';
     $confirm_password = isset($_POST['confirm_password']) ? $_POST['confirm_password'] : '';
-    $phone = isset($_POST['phone']) ? Security::sanitizeInput($_POST['phone']) : '';
-    $dob = isset($_POST['date_of_birth']) ? Security::sanitizeInput($_POST['date_of_birth']) : '';
+    $phone = isset($_POST['phone']) ? $_POST['phone'] : '';
+    $dob = isset($_POST['date_of_birth']) ? $_POST['date_of_birth'] : '';
 
     // Validate required fields
     if (!$name || !$email || !$password) {

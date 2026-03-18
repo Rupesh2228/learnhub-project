@@ -16,6 +16,32 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
                                      JOIN users u ON a.user_id = u.id 
                                      LEFT JOIN courses c ON a.course_id = c.id 
                                      ORDER BY a.id DESC LIMIT 20");
+
+// Get user course purchases
+$recent_orders = $conn->query("SELECT o.id, o.user_id, o.course_name, o.price, o.purchase_date, u.full_name
+                              FROM orders o
+                              JOIN users u ON o.user_id = u.id
+                              ORDER BY o.purchase_date DESC
+                              LIMIT 50");
+
+// Get existing quizzes and question counts
+$quizzes = $conn->query("SELECT q.id, q.course_id, c.course_name, COUNT(qq.id) AS question_count
+                         FROM quizzes q
+                         LEFT JOIN courses c ON q.course_id = c.id
+                         LEFT JOIN quiz_questions qq ON qq.quiz_id = q.id
+                         GROUP BY q.id, q.course_id, c.course_name
+                         ORDER BY q.id DESC");
+
+// Get quiz results for admin view
+$quiz_results = $conn->query("SELECT qr.id, u.full_name, c.course_name, qr.score, qr.total_questions, qr.percentage, qr.taken_at
+                             FROM quiz_results qr
+                             JOIN users u ON qr.user_id = u.id
+                             JOIN quizzes q ON qr.quiz_id = q.id
+                             JOIN courses c ON q.course_id = c.id
+                             ORDER BY qr.taken_at DESC LIMIT 100");
+
+// Get all courses for delete management
+$courses_list = $conn->query("SELECT id, course_name, price FROM courses ORDER BY course_name");
 ?>
 
 <!DOCTYPE html>
@@ -27,522 +53,13 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
-    <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #3f37c9;
-            --accent: #ec4899;
-            --bg: #f8fafc;
-            --surface: #f1f5f9;
-            --text: #1e293b;
-            --text-light: #64748b;
-            --card-bg: #ffffff;
-            --success: #10b981;
-            --success-light: #d1fae5;
-            --error: #ef4444;
-            --error-light: #fee2e2;
-            --warning: #f59e0b;
-            --info: #3b82f6;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        /* ===== NAVBAR ===== */
-        .navbar {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 20px 40px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .navbar h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .navbar h1 i {
-            font-size: 2rem;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 25px;
-            flex: 1;
-            margin-left: 50px;
-        }
-
-        .nav-links a {
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            border-radius: 6px;
-        }
-
-        .nav-links a:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 0.95rem;
-        }
-
-        .user-info a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-        }
-
-        .user-info a:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* ===== CONTAINER ===== */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        /* ===== CARDS ===== */
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .card:hover {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        .card-header {
-            padding: 25px;
-            border-bottom: 1px solid var(--surface);
-            background: var(--surface);
-        }
-
-        .card-body {
-            padding: 25px;
-        }
-
-        .card h3 {
-            margin: 0;
-            color: var(--text);
-            font-size: 1.3rem;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .card h3 i {
-            color: var(--primary);
-            font-size: 1.5rem;
-        }
-
-        /* ===== STATISTICS SECTION ===== */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 40px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border-left: 4px solid var(--primary);
-            transition: all 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card.users { border-left-color: var(--info); }
-        .stat-card.assignments { border-left-color: var(--success); }
-        .stat-card.courses { border-left-color: var(--warning); }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 10px 0;
-        }
-
-        .stat-label {
-            font-size: 0.95rem;
-            color: var(--text-light);
-            font-weight: 500;
-        }
-
-        .stat-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            opacity: 0.8;
-        }
-
-        .stat-card.users .stat-icon { color: var(--info); }
-        .stat-card.assignments .stat-icon { color: var(--success); }
-        .stat-card.courses .stat-icon { color: var(--warning); }
-
-        /* ===== TABLE STYLES ===== */
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table thead {
-            background: var(--surface);
-        }
-
-        table th {
-            padding: 15px 20px;
-            text-align: left;
-            font-weight: 600;
-            color: var(--text);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            border-bottom: 2px solid #e2e8f0;
-        }
-
-        table td {
-            padding: 15px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            color: var(--text);
-        }
-
-        table tbody tr {
-            transition: all 0.2s ease;
-        }
-
-        table tbody tr:hover {
-            background: var(--surface);
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .badge-user {
-            background: #dbeafe;
-            color: #0c4a6e;
-        }
-
-        .badge-email {
-            background: #f3e8ff;
-            color: #6b21a8;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        .edit, .delete {
-            padding: 8px 12px;
-            border-radius: 5px;
-            text-decoration: none;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: all 0.3s;
-        }
-
-        .edit {
-            background: var(--primary);
-            color: white;
-        }
-
-        .edit:hover {
-            background: var(--secondary);
-        }
-
-        .delete {
-            background: var(--error);
-            color: white;
-        }
-
-        .delete:hover {
-            background: #c82333;
-        }
-
-        /* Assignment Grid Styles */
-        .assignment-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .course-section {
-            margin-bottom: 30px;
-        }
-
-        .course-section h4 {
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-size: 1.1rem;
-        }
-
-        .assignment-card {
-            background: var(--card-bg);
-            border: 1px solid #eee;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s;
-        }
-
-        .assignment-card:hover {
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
-
-        .assignment-image-container {
-            position: relative;
-            width: 100%;
-            height: 200px;
-            background: #f0f0f0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .assignment-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .no-image {
-            font-size: 3rem;
-            color: #ccc;
-        }
-
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(220, 53, 69, 0.9);
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 1.2rem;
-            transition: all 0.3s;
-            border: none;
-        }
-
-        .delete-btn:hover {
-            background: rgba(200, 35, 51, 1);
-            transform: scale(1.1);
-        }
-
-        .assignment-info {
-            padding: 15px;
-        }
-
-        .assignment-info p {
-            margin: 8px 0;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        .assignment-info strong {
-            color: var(--secondary);
-        }
-
-        .btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.3s;
-            text-decoration: none;
-            display: inline-block;
-            margin-right: 10px;
-        }
-
-        .btn:hover {
-            background: var(--secondary);
-        }
-
-        .btn-success {
-            background: var(--success);
-        }
-
-        .btn-success:hover {
-            background: #218838;
-        }
-
-        .message-box {
-            padding: 15px 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        @media (max-width: 768px) {
-            .assignment-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            }
-
-            .navbar {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .action-buttons {
-                flex-direction: column;
-            }
-
-            table {
-                font-size: 0.9rem;
-            }
-
-            table th, table td {
-                padding: 10px;
-            }
-        }
-
-        /* Image Modal */
-        .image-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.7);
-            animation: fadeIn 0.3s;
-        }
-
-        .image-modal.show {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            position: relative;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 90%;
-            max-height: 90%;
-            overflow: auto;
-        }
-
-        .modal-content img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        .close-modal {
-            position: absolute;
-            right: 20px;
-            top: 20px;
-            background: var(--error);
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            border: none;
-        }
-
-        .close-modal:hover {
-            background: #c82333;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
+    <link rel="stylesheet" href="admin_dashboard.css">
 </head>
 <body>
 
     <div class="navbar">
           <nav class="nav-links">
-                <a href="landingpages.html" style="color: blue;">Home</a>
-                <a href="Course/course.html">Courses</a>
-                <a href="About/about.html">About</a>
-                <a href="Userdashboard/dashboard.php">Profile</a>
-                <a href="chart/chart.php">Messages</a>
+            <a href="../landingpages.html">Home</a>
             </nav>
         <h1><i class="fas fa-user-shield"></i> Admin Panel</h1>
         <div class="user-info">
@@ -569,10 +86,16 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
             <?php unset($_SESSION['error_message']); ?>
         <?php endif; ?>
 
-        <!-- Add New User -->
-        <div class="card">
-            <a href="admin_add_user.php" class="btn btn-success">
+        <!-- Admin Actions -->
+        <div class="card" style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="admin_add_user.php" class="btn btn-success" style="margin-bottom:5px;">
                 <i class="fas fa-user-plus"></i> Add New User
+            </a>
+            <a href="admin_add_quiz.php" class="btn btn-primary" style="margin-bottom:5px;">
+                <i class="fas fa-question-circle"></i> Add Quiz Question
+            </a>
+            <a href="admin_add_course.php" class="btn btn-primary" style="margin-bottom:5px;">
+                <i class="fas fa-book"></i> Add Course
             </a>
         </div>
 
@@ -618,6 +141,114 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
             </table>
         </div>
 
+        <!-- Quiz Management -->
+        <div class="card">
+            <h3><i class="fas fa-question-circle"></i> Existing Quizzes</h3>
+            <?php if ($quizzes && $quizzes->num_rows > 0): ?>
+                <table>
+                    <thead>
+                        <tr><th>Quiz ID</th><th>Course</th><th>Questions</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($quiz = $quizzes->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo $quiz['id']; ?></td>
+                                <td><?php echo htmlspecialchars($quiz['course_name'] ?? 'Unknown'); ?></td>
+                                <td><?php echo intval($quiz['question_count']); ?></td>
+                                <td>
+                                    <a href="admin_add_quiz.php?course_id=<?php echo $quiz['course_id']; ?>" class="edit">Edit</a>
+                                    <a href="admin_delete_quiz.php?id=<?php echo $quiz['id']; ?>" class="delete" onclick="return confirm('Delete this quiz and all related data?');">Delete</a>
+                                </td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p>No quizzes created yet.</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- Quiz Results -->
+        <div class="card">
+            <h3><i class="fas fa-chart-line"></i> User Quiz Results</h3>
+            <?php if ($quiz_results && $quiz_results->num_rows > 0): ?>
+                <table>
+                    <thead>
+                        <tr><th>ID</th><th>User</th><th>Course</th><th>Score</th><th>Percent</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($qr = $quiz_results->fetch_assoc()): ?>
+                        <tr>
+                            <td><?php echo intval($qr['id']); ?></td>
+                            <td><?php echo htmlspecialchars($qr['full_name']); ?></td>
+                            <td><?php echo htmlspecialchars($qr['course_name']); ?></td>
+                            <td><?php echo intval($qr['score']) . ' / ' . intval($qr['total_questions']); ?></td>
+                            <td><?php echo number_format($qr['percentage'], 2); ?>%</td>
+                            <td><?php echo date('Y-m-d H:i', strtotime($qr['taken_at'])); ?></td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p>No quiz results yet.</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- Course Management -->
+        <div class="card">
+            <h3><i class="fas fa-book"></i> Courses</h3>
+            <?php if ($courses_list && $courses_list->num_rows > 0): ?>
+            <table>
+                <thead>
+                    <tr><th>ID</th><th>Course</th><th>Price</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                <?php while ($course = $courses_list->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo intval($course['id']); ?></td>
+                        <td><?php echo htmlspecialchars($course['course_name']); ?></td>
+                        <td>Rs <?php echo number_format($course['price'], 2); ?></td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="admin_add_course.php" class="edit">Edit</a>
+                                <a href="admin_delete_course.php?id=<?php echo intval($course['id']); ?>" class="delete" onclick="return confirm('Delete course and related user purchases?');">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endwhile; ?>
+                </tbody>
+            </table>
+            <?php else: ?>
+                <p>No courses found.</p>
+            <?php endif; ?>
+        </div>
+
+        <!-- User Purchases -->
+        <div class="card">
+            <h3><i class="fas fa-shopping-cart"></i> User Course Purchases</h3>
+            <?php if ($recent_orders && $recent_orders->num_rows > 0): ?>
+                <table>
+                    <thead>
+                        <tr><th>Order ID</th><th>User</th><th>Course</th><th>Price</th><th>Date</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($order = $recent_orders->fetch_assoc()): ?>
+                            <tr>
+                                <td><?php echo intval($order['id']); ?></td>
+                                <td><?php echo htmlspecialchars($order['full_name']); ?></td>
+                                <td><?php echo htmlspecialchars($order['course_name']); ?></td>
+                                <td>Rs <?php echo number_format($order['price'], 2); ?></td>
+                                <td><?php echo date('Y-m-d H:i', strtotime($order['purchase_date'])); ?></td>
+                                <td><a href="admin_delete_order.php?id=<?php echo intval($order['id']); ?>" class="delete" onclick="return confirm('Remove this user purchase?');">Delete</a></td>
+                            </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <p>No purchases found.</p>
+            <?php endif; ?>
+        </div>
+
         <!-- Recent Assignments -->
         <div class="card">
             <h3><i class="fas fa-file-alt"></i> Recent Assignments</h3>
@@ -639,9 +270,17 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
                         }
                     ?>
                     <div class="assignment-card">
-                        <div class="assignment-image-container" onclick="viewImage(this)">
-                            <?php if($assignment['image']): ?>
-                                <img src="<?php echo WEB_ASSIGNMENTS . htmlspecialchars($assignment['image']); ?>" class="assignment-image" alt="Assignment" style="cursor: pointer;" onerror="displayNoImage(this)">
+                        <div class="assignment-image-container" onclick="viewFile(this)" data-file="<?php echo $assignment['file_path'] ? WEB_ASSIGNMENTS . htmlspecialchars($assignment['file_path']) : ''; ?>">
+                            <?php if($assignment['file_path']): ?>
+                                <?php $file_ext = strtolower(pathinfo($assignment['file_path'], PATHINFO_EXTENSION)); ?>
+                                <?php if(in_array($file_ext, ['jpg','jpeg','png','gif'])): ?>
+                                    <img src="<?php echo WEB_ASSIGNMENTS . htmlspecialchars($assignment['file_path']); ?>" class="assignment-image" alt="Assignment" style="cursor: pointer;" onerror="displayNoImage(this)">
+                                <?php else: ?>
+                                    <div class="file-icon">
+                                        <i class="fas fa-file-<?php echo ($file_ext == 'pdf') ? 'pdf' : 'alt'; ?>"></i>
+                                        <span><?php echo strtoupper($file_ext); ?></span>
+                                    </div>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <div class="no-image">
                                     <i class="fas fa-image"></i>
@@ -676,7 +315,12 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
     <!-- Image Modal -->
     <div id="imageModal" class="image-modal">
         <div class="modal-content">
-            <button class="close-modal" onclick="closeImageModal()">&times;</button>
+            <div class="modal-header">
+                <button class="delete-modal-btn" id="modalDeleteBtn" onclick="deleteFromModal()" title="Delete Assignment">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+                <button class="close-modal" onclick="closeImageModal()">&times;</button>
+            </div>
             <img id="modalImage" src="" alt="Assignment">
         </div>
     </div>
@@ -687,11 +331,30 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
             container.innerHTML = '<div class="no-image"><i class="fas fa-image"></i></div>';
         }
 
-        function viewImage(element) {
-            const img = element.querySelector('img');
-            if (img && img.src) {
-                document.getElementById('modalImage').src = img.src;
-                document.getElementById('imageModal').classList.add('show');
+        function viewFile(element) {
+            const fileSrc = element.getAttribute('data-file');
+            if (fileSrc) {
+                const img = element.querySelector('img');
+                if (img) {
+                    // It's an image, show modal
+                    document.getElementById('modalImage').src = img.src;
+                    // Get assignment ID from the card
+                    const assignmentCard = element.closest('.assignment-card');
+                    const idText = assignmentCard.querySelector('.assignment-info p').textContent;
+                    const id = idText.replace('ID: ', '').trim();
+                    document.getElementById('imageModal').setAttribute('data-assignment-id', id);
+                    document.getElementById('imageModal').classList.add('show');
+                } else {
+                    // It's a file, open in new tab
+                    window.open(fileSrc, '_blank');
+                }
+            }
+        }
+
+        function deleteFromModal() {
+            const id = document.getElementById('imageModal').getAttribute('data-assignment-id');
+            if (id && confirm('Are you sure you want to delete this assignment?')) {
+                window.location.href = 'admin_delete_assignment.php?id=' + id;
             }
         }
 
@@ -715,4 +378,4 @@ $recent_assignments = $conn->query("SELECT a.*, u.full_name, c.course_name
     </script>
 
 </body>
-</html>
+</html> i have this code on admin_dashboard.php

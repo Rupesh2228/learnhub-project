@@ -2,14 +2,8 @@
 require_once('../include.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Validate CSRF token
-    if (empty($_POST['csrf_token']) || !Security::validateCSRFToken($_POST['csrf_token'])) {
-        echo "<script>alert('Security validation failed. Please try again.'); window.location.href='login_signup.php';</script>";
-        exit();
-    }
-
-    $email = Security::sanitizeInput($_POST['email']);
-    $password = $_POST['password'];
+    $email = isset($_POST['email']) ? $_POST['email'] : '';
+    $password = isset($_POST['password']) ? $_POST['password'] : '';
 
     // ============================================
     // STEP 1: Check if user is an ADMIN
