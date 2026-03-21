@@ -104,3 +104,111 @@ CREATE INDEX idx_user_profiles_user ON user_profiles(user_id);
 -- ============================================
 -- END OF SCHEMA
 -- ============================================
+-- Create Database
+CREATE DATABASE learnhub_db;
+USE learnhub_db;
+
+-- Users Table
+CREATE TABLE users (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User Profiles Table
+CREATE TABLE user_profiles (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    user_id INT(11) NOT NULL,
+    profile_image VARCHAR(255),
+    bio TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Admins Table
+CREATE TABLE admins (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Courses Table
+CREATE TABLE courses (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    price_decimal DECIMAL(4,2),
+    image_path VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Orders Table
+CREATE TABLE orders (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    course_id INT(11) NOT NULL,
+    user_id INT(11) NOT NULL,
+    price_decimal DECIMAL(4,2),
+    status VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Quizzes Table
+CREATE TABLE quizzes (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    course_id INT(11) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+-- Quiz Questions Table
+CREATE TABLE quiz_questions (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT(11) NOT NULL,
+    question_text TEXT NOT NULL,
+    option_a VARCHAR(255),
+    option_b VARCHAR(255),
+    option_c VARCHAR(255),
+    option_d VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id)
+);
+
+-- Quiz Answers Table
+CREATE TABLE quiz_answers (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    quiz_question_id INT(11) NOT NULL,
+    answer_text VARCHAR(255),
+    is_correct ENUM('Y','N') DEFAULT 'N',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_question_id) REFERENCES quiz_questions(id)
+);
+
+-- Quiz Results Table
+CREATE TABLE quiz_results (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    quiz_id INT(11) NOT NULL,
+    user_id INT(11) NOT NULL,
+    quiz_question_id INT(11) NOT NULL,
+    points_decimal DECIMAL(4,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (quiz_id) REFERENCES quizzes(id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (quiz_question_id) REFERENCES quiz_questions(id)
+);
+
+-- Assignments Table
+CREATE TABLE assignments (
+    id INT(11) AUTO_INCREMENT PRIMARY KEY,
+    course_id INT(11) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);
